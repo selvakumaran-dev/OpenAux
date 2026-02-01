@@ -1,5 +1,24 @@
 const Room = require('../models/Room');
 
+// Helper function to get all users in a room
+function getRoomUsers(io, roomCode) {
+    const room = io.sockets.adapter.rooms.get(roomCode);
+    if (!room) return [];
+
+    const users = [];
+    room.forEach(socketId => {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket) {
+            users.push({
+                socketId: socket.id,
+                userName: socket.userName || 'Anonymous',
+                isHost: socket.isHost || false
+            });
+        }
+    });
+    return users;
+}
+
 module.exports = (io) => {
     io.on('connection', (socket) => {
         console.log(`✅ User connected: ${socket.id}`);
@@ -25,11 +44,20 @@ module.exports = (io) => {
                 // Send current queue to the new user
                 socket.emit('queue_updated', { queue: room.queue });
 
-                // Notify others
-                socket.to(roomCode).emit('user_joined', {
+                // Get updated user list
+                const users = getRoomUsers(io, roomCode);
+                const userCount = users.length;
+
+                // Notify all users in room (including the new user)
+                io.to(roomCode).emit('user_joined', {
                     userName: socket.userName,
-                    userCount: io.sockets.adapter.rooms.get(roomCode)?.size || 1
+                    userCount,
+                    users
                 });
+
+                // Also send to the user who just joined
+                socket.emit('users_updated', { users, userCount });
+
             } catch (error) {
                 console.error('Join room error:', error);
                 socket.emit('join_error', { message: 'Failed to join room. Please try again.' });
@@ -156,11 +184,18 @@ module.exports = (io) => {
         // ==================== DISCONNECT ====================
         socket.on('disconnect', () => {
             if (socket.roomCode) {
-                socket.to(socket.roomCode).emit('user_left', {
+                const roomCode = socket.roomCode;
+
+                // Get updated user list after disconnect
+                const users = getRoomUsers(io, roomCode);
+                const userCount = users.length;
+
+                socket.to(roomCode).emit('user_left', {
                     userName: socket.userName,
-                    userCount: io.sockets.adapter.rooms.get(socket.roomCode)?.size || 0
+                    userCount,
+                    users
                 });
-                console.log(`❌ ${socket.userName} left ${socket.roomCode}`);
+                console.log(`❌ ${socket.userName} left ${roomCode}`);
             }
         });
     });

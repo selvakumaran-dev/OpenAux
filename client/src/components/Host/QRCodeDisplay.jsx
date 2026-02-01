@@ -4,12 +4,22 @@ import { Copy, Check } from 'lucide-react';
 
 const QRCodeDisplay = ({ roomCode }) => {
     const [copiedCode, setCopiedCode] = useState(false);
-    const roomUrl = `${window.location.origin}/join/${roomCode}`;
+    const [copiedUrl, setCopiedUrl] = useState(false);
+
+    // Use environment variable for deployed URL, fallback to current origin
+    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+    const roomUrl = `${frontendUrl}/join/${roomCode}`;
 
     const copyRoomCode = () => {
         navigator.clipboard.writeText(roomCode);
         setCopiedCode(true);
         setTimeout(() => setCopiedCode(false), 2000);
+    };
+
+    const copyRoomUrl = () => {
+        navigator.clipboard.writeText(roomUrl);
+        setCopiedUrl(true);
+        setTimeout(() => setCopiedUrl(false), 2000);
     };
 
     return (
@@ -51,8 +61,20 @@ const QRCodeDisplay = ({ roomCode }) => {
             </div>
 
             <div className="mt-6 pt-6 border-t border-white/10">
-                <p className="text-gray-300 text-xs text-center">
+                <p className="text-gray-300 text-xs text-center mb-3">
                     🎯 Guests must be within 100m to vote
+                </p>
+
+                {/* Copy URL Button */}
+                <button
+                    onClick={copyRoomUrl}
+                    className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-300 text-sm font-medium"
+                >
+                    {copiedUrl ? '✓ URL Copied!' : '📋 Copy Join Link'}
+                </button>
+
+                <p className="text-gray-400 text-xs text-center mt-2 break-all">
+                    {roomUrl}
                 </p>
             </div>
         </div>
@@ -60,4 +82,3 @@ const QRCodeDisplay = ({ roomCode }) => {
 };
 
 export default QRCodeDisplay;
-

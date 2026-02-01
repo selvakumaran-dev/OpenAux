@@ -45,21 +45,30 @@ const SongSearch = ({ roomCode }) => {
     return (
         <div className="space-y-4">
             {/* Search Form */}
-            <form onSubmit={searchSongs} className="relative">
-                <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search for songs..."
-                    className="input-field w-full pl-12 pr-4"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <form onSubmit={searchSongs} className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search for songs..."
+                        className="input-field w-full pl-12 pr-4"
+                    />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                </div>
                 <button
                     type="submit"
                     disabled={loading}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 btn-primary py-2 px-4"
+                    className="btn-primary py-3 px-6 whitespace-nowrap flex items-center justify-center gap-2"
                 >
-                    {loading ? <Loader className="w-5 h-5 animate-spin" /> : 'Search'}
+                    {loading ? (
+                        <>
+                            <Loader className="w-5 h-5 animate-spin" />
+                            <span>Searching...</span>
+                        </>
+                    ) : (
+                        'Search'
+                    )}
                 </button>
             </form>
 
@@ -68,10 +77,10 @@ const SongSearch = ({ roomCode }) => {
                 {loading ? (
                     // Skeleton Loading State
                     Array.from({ length: 5 }).map((_, index) => (
-                        <div key={index} className="glass-card p-4 animate-pulse">
-                            <div className="flex items-center gap-4">
+                        <div key={index} className="glass-card p-3 sm:p-4 animate-pulse">
+                            <div className="flex items-center gap-3 sm:gap-4">
                                 {/* Skeleton Thumbnail */}
-                                <div className="w-20 h-14 bg-gray-700 rounded-lg flex-shrink-0"></div>
+                                <div className="w-16 h-12 sm:w-20 sm:h-14 bg-gray-700 rounded-lg flex-shrink-0"></div>
 
                                 {/* Skeleton Text */}
                                 <div className="flex-1 space-y-2">
@@ -81,7 +90,7 @@ const SongSearch = ({ roomCode }) => {
                                 </div>
 
                                 {/* Skeleton Button */}
-                                <div className="w-10 h-10 bg-gray-700 rounded-xl flex-shrink-0"></div>
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-xl flex-shrink-0"></div>
                             </div>
                         </div>
                     ))
@@ -92,22 +101,22 @@ const SongSearch = ({ roomCode }) => {
                         return (
                             <div
                                 key={song.youtubeId}
-                                className="glass-card p-4 hover:bg-white/20 transition-all duration-300"
+                                className="glass-card p-3 sm:p-4 hover:bg-white/20 transition-all duration-300"
                             >
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3 sm:gap-4">
                                     {/* Thumbnail */}
                                     <img
                                         src={song.thumbnail}
                                         alt={song.title}
-                                        className="w-20 h-14 object-cover rounded-lg shadow-md flex-shrink-0"
+                                        className="w-16 h-12 sm:w-20 sm:h-14 object-cover rounded-lg shadow-md flex-shrink-0"
                                     />
 
                                     {/* Song Info */}
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-white truncate">
+                                        <h4 className="font-semibold text-white truncate text-sm sm:text-base">
                                             {song.title}
                                         </h4>
-                                        <p className="text-sm text-gray-400 truncate">
+                                        <p className="text-xs sm:text-sm text-gray-400 truncate">
                                             {song.channelTitle}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
@@ -119,15 +128,15 @@ const SongSearch = ({ roomCode }) => {
                                     <button
                                         onClick={() => addToQueue(song)}
                                         disabled={isAdded}
-                                        className={`flex-shrink-0 p-3 rounded-xl transition-all duration-300 ${isAdded
+                                        className={`flex-shrink-0 p-3 sm:p-3 rounded-xl transition-all duration-300 touch-manipulation ${isAdded
                                             ? 'bg-green-500 text-white'
-                                            : 'bg-primary-500 hover:bg-primary-600 text-white hover:scale-105'
+                                            : 'bg-primary-500 hover:bg-primary-600 text-white active:scale-95'
                                             }`}
                                     >
                                         {isAdded ? (
-                                            <Check className="w-5 h-5" />
+                                            <Check className="w-5 h-5 sm:w-6 sm:h-6" />
                                         ) : (
-                                            <Plus className="w-5 h-5" />
+                                            <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
                                         )}
                                     </button>
                                 </div>
@@ -140,7 +149,7 @@ const SongSearch = ({ roomCode }) => {
             {results.length === 0 && !loading && (
                 <div className="text-center py-12 glass-card">
                     <Search className="w-16 h-16 mx-auto text-gray-400 mb-3" />
-                    <p className="text-gray-400">Search for songs to add to the queue</p>
+                    <p className="text-gray-400 text-sm sm:text-base px-4">Search for songs to add to the queue</p>
                 </div>
             )}
         </div>
