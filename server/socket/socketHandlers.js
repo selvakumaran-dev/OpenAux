@@ -1,4 +1,5 @@
 const Room = require('../models/Room');
+const { haversineDistance } = require('../middleware/geofence');
 
 // Helper function to get all users in a room
 function getRoomUsers(io, roomCode) {
@@ -19,12 +20,37 @@ function getRoomUsers(io, roomCode) {
     return users;
 }
 
+// Helper function to validate geofence
+function validateGuestLocation(guestLocation, roomLocation, maxDistance) {
+    if (!guestLocation || !guestLocation.lat || !guestLocation.lng) {
+        return { valid: false, error: 'Location required. Please enable location services.' };
+    }
+
+    const distance = haversineDistance(
+        roomLocation.lat,
+        roomLocation.lng,
+        guestLocation.lat,
+        guestLocation.lng
+    );
+
+    if (distance > maxDistance) {
+        return {
+            valid: false,
+            error: `You are too far from the party! You must be within ${maxDistance}m to participate.`,
+            distance: Math.round(distance),
+            maxDistance
+        };
+    }
+
+    return { valid: true, distance: Math.round(distance) };
+}
+
 module.exports = (io) => {
     io.on('connection', (socket) => {
         console.log(`✅ User connected: ${socket.id}`);
 
         // ==================== JOIN ROOM ====================
-        socket.on('join_room', async ({ roomCode, isHost, userName }) => {
+        socket.on('join_room', async ({ roomCode, isHost, userName, location }) => {
             try {
                 const room = await Room.findOne({ roomCode, isActive: true });
 
@@ -32,6 +58,28 @@ module.exports = (io) => {
                     socket.emit('join_error', { message: 'Room not found. Please check the room code and try again.' });
                     socket.emit('room_not_found');
                     return socket.emit('error', { message: 'Room not found' });
+                }
+
+                // Validate geofence for guests (skip for host)
+                if (!isHost) {
+                    const validation = validateGuestLocation(
+                        location,
+                        room.location,
+                        room.settings.geofenceRadius
+                    );
+
+                    if (!validation.valid) {
+                        console.log(`❌ ${userName} too far from room ${roomCode}: ${validation.distance}m`);
+                        socket.emit('join_error', {
+                            message: validation.error,
+                            distance: validation.distance,
+                            maxDistance: validation.maxDistance
+                        });
+                        return socket.emit('error', { message: validation.error });
+                    }
+
+                    console.log(`📍 ${userName} is ${validation.distance}m from host (within ${room.settings.geofenceRadius}m)`);
+                    socket.guestLocation = location; // Store location for future validation
                 }
 
                 socket.join(roomCode);
@@ -112,6 +160,24 @@ module.exports = (io) => {
 
                 if (!room) {
                     return socket.emit('error', { message: 'Room not found' });
+                }
+
+                // Validate geofence for guests (skip for host)
+                if (!socket.isHost && socket.guestLocation) {
+                    const validation = validateGuestLocation(
+                        socket.guestLocation,
+                        room.location,
+                        room.settings.geofenceRadius
+                    );
+
+                    if (!validation.valid) {
+                        console.log(`❌ ${socket.userName} too far to vote: ${validation.distance}m`);
+                        return socket.emit('error', {
+                            message: `You're too far to vote! Must be within ${room.settings.geofenceRadius}m of the party.`,
+                            distance: validation.distance,
+                            maxDistance: validation.maxDistance
+                        });
+                    }
                 }
 
                 const song = room.queue.id(songId);

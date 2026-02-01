@@ -2,11 +2,12 @@
 
 <div align="center">
 
-**A Real-Time, Geofenced Democratic Music Platform**
+**A GPS-Verified Real-Time Democratic Music Platform**
 
 [![MERN Stack](https://img.shields.io/badge/Stack-MERN-green?style=for-the-badge)](https://www.mongodb.com/mern-stack)
 [![Socket.io](https://img.shields.io/badge/Real--Time-Socket.io-blue?style=for-the-badge)](https://socket.io/)
 [![YouTube API](https://img.shields.io/badge/API-YouTube%20Data%20v3-red?style=for-the-badge)](https://developers.google.com/youtube/v3)
+[![Geofencing](https://img.shields.io/badge/Geofencing-200m%20GPS-orange?style=for-the-badge)](#)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Tech Stack](#%EF%B8%8F-tech-stack) • [Deployment](#-deployment) • [Documentation](#-documentation)
@@ -17,16 +18,16 @@
 
 ## 📖 Overview
 
-**OpenAux** is a location-based collaborative music platform that democratizes playlist control at venues, parties, and events. Hosts create rooms with geofenced boundaries, while guests within range can search, add, and vote on songs in real-time. The most popular songs automatically play next, creating a truly democratic music experience.
+**OpenAux** is a location-verified collaborative music platform that democratizes playlist control at venues, parties, and events. Hosts create rooms with GPS-based geofenced boundaries, while guests within a 200-meter radius can search, add, and vote on songs in real-time. The most popular songs automatically play next, creating a truly democratic music experience secured by location validation.
 
 ### 🎯 Key Highlights
 
-- **🌍 Geofenced Access** - Guests must be within 100m radius to participate
-- **🎵 Democratic Voting** - Community-driven playlist through upvotes/downvotes
+- **🌍 GPS Geofencing (200m)** - Location-verified participation using Haversine distance calculation
+- **🎵 Democratic Voting** - One vote per guest, fair community-driven playlists
 - **⚡ Real-Time Sync** - Instant queue updates via WebSocket connections
+- **🔒 Session Management** - Prevents multiple accounts from the same device
 - **🎨 Premium UI/UX** - Modern glassmorphism design with smooth animations
-- **🔒 Vibe Control** - Keyword filtering to maintain desired atmosphere
-- **📱 Mobile-First** - Fully responsive design for all devices
+- **📱 Mobile-First** - Fully responsive, touch-optimized interface
 - **🆓 Free Tier** - Uses YouTube Data API (no Spotify Premium required)
 
 ---
@@ -35,29 +36,33 @@
 
 ### 🎭 For Hosts
 
-- **Room Creation** - Generate unique 6-character room codes
-- **QR Code Sharing** - Instant guest invitations via QR codes
-- **Playback Control** - Integrated YouTube player with auto-play
-- **Queue Management** - View and manage song requests
-- **Vibe Guardrails** - Ban keywords to filter unwanted genres
-- **Settings Dashboard** - Configure geofence radius and queue limits
+- **Room Creation** - Generate unique 6-character room codes with GPS location capture
+- **QR Code Sharing** - Instant guest invitations via scannable QR codes
+- **Playback Control** - Integrated YouTube player with auto-play next song
+- **Queue Management** - View real-time song requests with vote counts
+- **User Management** - See all active users with host/guest indicators
+- **Settings Dashboard** - Configure geofence radius (50m-1000m) and queue limits
+- **Vibe Control** - Ban keywords to filter unwanted genres
 
 ### 👥 For Guests
 
-- **Quick Join** - Enter room code or scan QR code
-- **Song Search** - Search YouTube's music library
-- **Add to Queue** - Request songs with one tap
-- **Democratic Voting** - Upvote/downvote songs to influence order
-- **Real-Time Updates** - See queue changes instantly
-- **Visual Feedback** - Rank badges, vote counts, and animations
+- **Quick Join** - Enter room code or scan QR code (location verified)
+- **Song Search** - Search YouTube's music library with instant results
+- **Add to Queue** - Request songs with one tap (duplicate prevention)
+- **Democratic Voting** - One active vote per guest (upvote/downvote)
+- **Real-Time Updates** - See queue changes and vote counts instantly
+- **Visual Feedback** - Rank badges, vote animations, and status indicators
+- **User List** - View all active participants in the room
 
 ### 🔧 Technical Features
 
+- **GPS Validation** - Location checked on join AND vote (Haversine formula)
+- **Session Persistence** - Auto-rejoin on page refresh
+- **Device Tracking** - Prevents multiple accounts from same device
 - **Auto-Reconnection** - Handles network interruptions gracefully
 - **Skeleton Loaders** - Professional loading states
 - **Offline Detection** - Network status monitoring
 - **Error Boundaries** - Graceful error handling
-- **Responsive Design** - Works on phones, tablets, and desktops
 - **HTTPS Ready** - Production-ready security
 
 ---
@@ -188,11 +193,14 @@ OpenAux/
 │   │   │   │   ├── YouTubePlayer.jsx    # Embedded player
 │   │   │   │   ├── QRCodeDisplay.jsx    # Room invitation
 │   │   │   │   └── RoomSettings.jsx     # Configuration panel
+│   │   │   ├── UserListModal.jsx    # Active users display
 │   │   │   ├── ErrorBoundary.jsx    # Error handling
 │   │   │   ├── Logo.jsx             # Branding component
 │   │   │   └── OfflineDetector.jsx  # Network monitoring
 │   │   ├── context/
 │   │   │   └── SocketContext.jsx    # Socket.io provider
+│   │   ├── hooks/
+│   │   │   └── useGuestSession.js   # Session management hook
 │   │   ├── pages/
 │   │   │   ├── CreateRoom.jsx       # Host landing page
 │   │   │   ├── JoinRoom.jsx         # Guest entry point
@@ -217,14 +225,14 @@ OpenAux/
 │   │   └── songController.js        # YouTube search logic
 │   ├── middleware/
 │   │   ├── errorHandler.js          # Error middleware
-│   │   └── geofence.js              # Location validation
+│   │   └── geofence.js              # Location validation (Haversine)
 │   ├── models/
 │   │   └── Room.js                  # MongoDB schemas
 │   ├── routes/
 │   │   ├── roomRoutes.js            # Room endpoints
 │   │   └── songRoutes.js            # Song endpoints
 │   ├── socket/
-│   │   └── socketHandlers.js        # Socket.io events
+│   │   └── socketHandlers.js        # Socket.io events + geofencing
 │   ├── utils/
 │   │   └── youtubeFilter.js         # Keyword filtering
 │   ├── .env                         # Environment variables
@@ -270,16 +278,16 @@ OpenAux/
 
 - **YouTube Data API v3** - Music search and metadata
 - **YouTube IFrame Player API** - Embedded video playback
-- **Browser Geolocation API** - User location tracking
+- **Browser Geolocation API** - User location tracking (GPS)
 - **MongoDB Atlas** - Cloud database hosting
 
 ---
 
 ## 🔧 Core Technical Implementations
 
-### 1. Geofencing with Haversine Formula
+### 1. GPS Geofencing with Haversine Formula (200m Radius)
 
-Validates that guests are within the specified radius of the host's location.
+Validates that guests are within 200 meters of the host's location using accurate spherical distance calculation.
 
 ```javascript
 // server/middleware/geofence.js
@@ -296,25 +304,105 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  return R * c; // Distance in meters
+  return R * c; // Distance in meters (±5m accuracy)
 }
 ```
 
-### 2. Real-Time Socket Events
+**Location Validation Points:**
+- ✅ Validated on room join
+- ✅ Re-validated on every vote
+- ✅ Host exempt from restrictions
+- ✅ Configurable radius (default: 200m)
+
+### 2. One Vote Per Guest System
+
+Ensures fair democratic voting by allowing only one active vote per guest at a time.
+
+```javascript
+// client/src/components/Guest/QueueList.jsx
+const [currentVotedSong, setCurrentVotedSong] = useState(null);
+
+const handleVote = (songId, voteType) => {
+    // If clicking same song with same vote type, unvote
+    if (currentVotedSong?.songId === songId && currentVotedSong?.voteType === voteType) {
+        socket.emit('vote_song', { roomCode, songId, voteType });
+        setCurrentVotedSong(null);
+        return;
+    }
+
+    // If there's a previous vote on different song, remove it first
+    if (currentVotedSong && currentVotedSong.songId !== songId) {
+        socket.emit('vote_song', { 
+            roomCode, 
+            songId: currentVotedSong.songId, 
+            voteType: currentVotedSong.voteType 
+        });
+    }
+
+    // Cast new vote
+    socket.emit('vote_song', { roomCode, songId, voteType });
+    setCurrentVotedSong({ songId, voteType });
+};
+```
+
+### 3. Session Management & Device Tracking
+
+Prevents multiple accounts from the same device using localStorage and device ID tracking.
+
+```javascript
+// client/src/hooks/useGuestSession.js
+export const useGuestSession = (roomCode) => {
+    const SESSION_KEY = `openaux_session_${roomCode}`;
+    const DEVICE_ID_KEY = 'openaux_device_id';
+
+    // Generate or get device ID
+    const getDeviceId = () => {
+        let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+        
+        if (!deviceId) {
+            deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            localStorage.setItem(DEVICE_ID_KEY, deviceId);
+        }
+        
+        return deviceId;
+    };
+
+    // Create session with device tracking
+    const createSession = (userName, location) => {
+        const session = {
+            userName,
+            location,
+            deviceId: getDeviceId(),
+            joinedAt: new Date().toISOString(),
+            roomCode
+        };
+
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        return session;
+    };
+
+    // Auto-rejoin on page refresh
+    // Clear session on tab close
+};
+```
+
+### 4. Real-Time Socket Events
 
 | Event | Direction | Payload | Description |
 |-------|-----------|---------|-------------|
-| `join_room` | Client → Server | `{ roomCode, isHost, userName, location }` | Join room with location |
+| `join_room` | Client → Server | `{ roomCode, isHost, userName, location }` | Join room with GPS validation |
 | `add_song` | Client → Server | `{ roomCode, song }` | Add song to queue |
-| `vote_song` | Client → Server | `{ roomCode, songId, voteType }` | Upvote/downvote song |
+| `vote_song` | Client → Server | `{ roomCode, songId, voteType }` | Upvote/downvote with location check |
 | `song_ended` | Host → Server | `{ roomCode, songId }` | Notify song completion |
 | `queue_updated` | Server → All Clients | `{ queue }` | Broadcast queue changes |
 | `play_next_song` | Server → Host | `{ song }` | Trigger next song playback |
-| `user_joined` | Server → All Clients | `{ userName, userCount }` | Notify new user |
-| `user_left` | Server → All Clients | `{ userName, userCount }` | Notify user departure |
-| `error` | Server → Client | `{ message }` | Error notification |
+| `user_joined` | Server → All Clients | `{ userName, userCount, users }` | Notify new user |
+| `user_left` | Server → All Clients | `{ userName, userCount, users }` | Notify user departure |
+| `users_updated` | Server → Client | `{ users, userCount }` | Send user list |
+| `join_error` | Server → Client | `{ message, distance, maxDistance }` | Location validation error |
+| `error` | Server → Client | `{ message }` | General error notification |
 
-### 3. YouTube Auto-Play System
+### 5. YouTube Auto-Play System
 
 ```javascript
 // client/src/components/Host/YouTubePlayer.jsx
@@ -334,40 +422,7 @@ socket.on('play_next_song', ({ song }) => {
 });
 ```
 
-### 4. Vibe Control (Keyword Filtering)
-
-```javascript
-// server/utils/youtubeFilter.js
-async function searchYouTubeWithFilter(query, bannedKeywords = []) {
-  // Fetch search results from YouTube
-  const searchResponse = await axios.get(
-    'https://www.googleapis.com/youtube/v3/search',
-    { params: { q: query, type: 'video', videoCategoryId: '10' } }
-  );
-
-  // Filter out banned content
-  const filtered = results.filter(video => {
-    const title = video.snippet.title.toLowerCase();
-    const description = video.snippet.description.toLowerCase();
-    const tags = (video.snippet.tags || []).map(tag => tag.toLowerCase());
-
-    const hasBannedContent = bannedKeywords.some(keyword => {
-      const lowerKeyword = keyword.toLowerCase();
-      return (
-        title.includes(lowerKeyword) ||
-        description.includes(lowerKeyword) ||
-        tags.some(tag => tag.includes(lowerKeyword))
-      );
-    });
-
-    return !hasBannedContent;
-  });
-
-  return filtered;
-}
-```
-
-### 5. Socket Reconnection Logic
+### 6. Socket Reconnection Logic
 
 ```javascript
 // client/src/context/SocketContext.jsx
@@ -476,7 +531,7 @@ newSocket.on('reconnect', (attemptNumber) => {
   },
   settings: {
     bannedKeywords: [String],
-    geofenceRadius: { type: Number, default: 100 }, // meters
+    geofenceRadius: { type: Number, default: 200 }, // meters (200m = ~2 football fields)
     maxQueueSize: { type: Number, default: 50 }
   },
   queue: [SongSchema],
@@ -510,105 +565,63 @@ newSocket.on('reconnect', (attemptNumber) => {
 
 ---
 
-## 🎨 Design System
-
-### Color Palette
-
-```css
-/* Primary (Orange) */
---primary-50: #fef3e2;
---primary-500: #f9ac12;
---primary-900: #f57c05;
-
-/* Dark (Navy) */
---dark-700: #3e4c59;
---dark-800: #323f4b;
---dark-900: #1f2933;
-
-/* Semantic Colors */
---success: #10b981;  /* Green */
---error: #ef4444;    /* Red */
---warning: #f59e0b;  /* Amber */
-```
-
-### Typography
-
-- **Font Family**: System fonts (`-apple-system, BlinkMacSystemFont, 'Segoe UI', ...`)
-- **Headings**: Bold, gradient text effects
-- **Body**: 16px minimum (prevents iOS zoom)
-
-### Components
-
-#### Glass Card
-```css
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1rem;
-}
-```
-
-#### Gradient Button
-```css
-.btn-primary {
-  background: linear-gradient(135deg, #f9ac12 0%, #f57c05 100%);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.btn-primary:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 40px rgba(249, 172, 18, 0.4);
-}
-```
-
----
-
 ## 🎯 Usage Guide
 
 ### For Hosts
 
 1. **Create Room**
    - Click "Create Room" on homepage
-   - Allow location access when prompted
+   - Allow location access when prompted (GPS required)
    - Enter your name (optional)
    - Click "Create Room"
 
 2. **Share Room**
    - Display QR code for guests to scan
    - Or share the 6-character room code
+   - Copy join link for easy sharing
 
 3. **Manage Queue**
-   - View all requested songs
-   - See vote counts in real-time
+   - View all requested songs with vote counts
+   - See real-time vote updates
    - Songs auto-play based on votes
+   - Top song (🏆 crown icon) plays next
 
-4. **Configure Settings** (Optional)
+4. **View Users**
+   - Click user count to see all active participants
+   - Host indicated with 👑 crown icon
+   - Guests shown with 🎵 music icon
+
+5. **Configure Settings** (Optional)
    - Add banned keywords (e.g., "country", "metal")
-   - Adjust geofence radius
+   - Adjust geofence radius (50m-1000m)
    - Set maximum queue size
 
 ### For Guests
 
 1. **Join Room**
    - Scan QR code or enter room code
-   - Allow location access (must be within 100m)
+   - Allow location access (must be within 200m)
    - Enter your name (optional)
+   - System validates GPS location
 
 2. **Add Songs**
    - Search for songs using the search bar
    - Click **+** button to add to queue
    - Button turns green when added
+   - Duplicate songs prevented
 
 3. **Vote on Songs**
    - Click **↑** to upvote (increases priority)
    - Click **↓** to downvote (decreases priority)
+   - **One vote at a time** - voting on new song removes previous vote
    - Vote count updates instantly for all users
+   - Click same button again to unvote
 
 4. **Watch Queue**
    - See songs ranked by votes
    - Top song (🏆 crown icon) plays next
    - Real-time updates as others vote
+   - Your active vote highlighted in green/red
 
 ---
 
@@ -616,15 +629,18 @@ newSocket.on('reconnect', (attemptNumber) => {
 
 ### Location Access Issues
 
-**Problem**: "Location access required" error
+**Problem**: "Location access required" or "You are too far from the party" error
 
 **Solutions**:
 - Ensure you're using **HTTPS** (required in production)
 - Check browser location permissions:
   - Chrome: Settings → Privacy → Site Settings → Location
   - Safari: Settings → Privacy → Location Services
-- Try a different browser
 - Ensure location services are enabled on your device
+- Move closer to the host (within 200m)
+- GPS accuracy can vary (±5-50m typically)
+- Wait for GPS to stabilize (can take 30 seconds)
+- Ensure clear view of sky (GPS works better outdoors)
 
 ### YouTube Player Not Loading
 
@@ -647,6 +663,16 @@ newSocket.on('reconnect', (attemptNumber) => {
 - Check firewall/network settings
 - Look for reconnection banner (yellow)
 
+### Multiple Account Prevention
+
+**Problem**: "You are already in this room" error
+
+**Solutions**:
+- This is intentional - one account per device per room
+- Close all tabs of the room and try again
+- Clear browser localStorage if needed
+- Use different device or browser for second account
+
 ### Songs Not Searching
 
 **Problem**: No results when searching
@@ -657,29 +683,24 @@ newSocket.on('reconnect', (attemptNumber) => {
 - Check server console for errors
 - Ensure internet connection is stable
 
-### Geofence Validation Failing
-
-**Problem**: "You must be within 100m" error when nearby
-
-**Solutions**:
-- GPS accuracy can vary (5-50m typically)
-- Move closer to the host
-- Ensure clear view of sky (GPS works better outdoors)
-- Wait for GPS to stabilize (can take 30 seconds)
-
 ---
 
 ## 📚 Documentation
 
-### Additional Resources
+### Key Features Summary
 
-- **[API Documentation](./docs/API.md)** - REST and Socket.io endpoints
-- **[Deployment Guide](./DEPLOY_AND_TEST.md)** - Step-by-step deployment
-- **[Bug Analysis](./PRE_DEPLOYMENT_REPORT.md)** - Known issues and fixes
-- **[Enhancement Guide](./ENHANCEMENTS_COMPLETE.md)** - Recent improvements
-- **[YouTube API Setup](./YOUTUBE_API_SETUP.md)** - Detailed API configuration
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **GPS Geofencing** | 200m radius validation using Haversine formula | ✅ Implemented |
+| **One Vote Per Guest** | Fair democratic voting system | ✅ Implemented |
+| **Session Management** | Prevents multiple accounts from same device | ✅ Implemented |
+| **Real-Time Sync** | WebSocket-based instant updates | ✅ Implemented |
+| **QR Code Join** | Instant room access via QR scanning | ✅ Implemented |
+| **User List** | View all active participants | ✅ Implemented |
+| **Auto-Play** | Automatic next song playback | ✅ Implemented |
+| **Mobile Responsive** | Touch-optimized interface | ✅ Implemented |
 
-### Architecture Diagrams
+### Architecture Diagram
 
 ```
 ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
@@ -691,7 +712,7 @@ newSocket.on('reconnect', (attemptNumber) => {
        ▼                       ▼
 ┌─────────────┐         ┌─────────────┐
 │  Geolocation│         │  YouTube    │
-│     API     │         │   API v3    │
+│   API (GPS) │         │   API v3    │
 └─────────────┘         └─────────────┘
 ```
 
@@ -769,6 +790,8 @@ If you find this project useful, please consider giving it a star! ⭐
 <div align="center">
 
 **Built with ❤️ for music lovers and developers**
+
+**Secured by GPS • Powered by Democracy • Connected in Real-Time**
 
 [⬆ Back to Top](#-openaux)
 
