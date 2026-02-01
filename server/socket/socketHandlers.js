@@ -154,7 +154,7 @@ module.exports = (io) => {
         });
 
         // ==================== VOTE SONG ====================
-        socket.on('vote_song', async ({ roomCode, songId, voteType }) => {
+        socket.on('vote_song', async ({ roomCode, songId, voteType, location }) => {
             try {
                 const room = await Room.findOne({ roomCode, isActive: true });
 
@@ -162,22 +162,26 @@ module.exports = (io) => {
                     return socket.emit('error', { message: 'Room not found' });
                 }
 
-                // Validate geofence for guests (skip for host)
-                if (!socket.isHost && socket.guestLocation) {
+                // Validate CURRENT location for guests (skip for host)
+                if (!socket.isHost && location) {
                     const validation = validateGuestLocation(
-                        socket.guestLocation,
+                        location,  // ← Use current location from vote request
                         room.location,
                         room.settings.geofenceRadius
                     );
 
                     if (!validation.valid) {
-                        console.log(`❌ ${socket.userName} too far to vote: ${validation.distance}m`);
+                        console.log(`❌ ${socket.userName} too far to vote: ${validation.distance}m (max: ${room.settings.geofenceRadius}m)`);
                         return socket.emit('error', {
-                            message: `You're too far to vote! Must be within ${room.settings.geofenceRadius}m of the party.`,
+                            message: `You're too far to vote! You're ${validation.distance}m away (max: ${room.settings.geofenceRadius}m)`,
                             distance: validation.distance,
                             maxDistance: validation.maxDistance
                         });
                     }
+
+                    // Update stored location for reference
+                    socket.guestLocation = location;
+                    console.log(`📍 ${socket.userName} voted from ${validation.distance}m away`);
                 }
 
                 const song = room.queue.id(songId);

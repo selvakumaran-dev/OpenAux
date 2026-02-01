@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSocket } from '../../context/SocketContext';
 import { ChevronUp, ChevronDown, Music, Clock, Crown } from 'lucide-react';
+import { getCurrentLocation } from '../../utils/geolocation';
 
 const QueueList = ({ roomCode }) => {
     const [queue, setQueue] = useState([]);
     const [currentVotedSong, setCurrentVotedSong] = useState(null); // Only track ONE voted song
+    const [locationError, setLocationError] = useState(null);
     const { socket } = useSocket();
 
     useEffect(() => {
@@ -24,32 +26,57 @@ const QueueList = ({ roomCode }) => {
         };
     }, [socket]);
 
-    const handleVote = (songId, voteType) => {
-        // If clicking on the same song with same vote type, unvote
-        if (currentVotedSong?.songId === songId && currentVotedSong?.voteType === voteType) {
-            // Unvote
-            socket.emit('vote_song', { roomCode, songId, voteType });
-            setCurrentVotedSong(null);
-            return;
-        }
+    const handleVote = async (songId, voteType) => {
+        try {
+            // Clear any previous location errors
+            setLocationError(null);
 
-        // If there's a previous vote on a different song, remove it first
-        if (currentVotedSong && currentVotedSong.songId !== songId) {
-            // Remove previous vote
-            socket.emit('vote_song', {
-                roomCode,
-                songId: currentVotedSong.songId,
-                voteType: currentVotedSong.voteType
-            });
-        }
+            // Get current location (silent if permission already granted)
+            const location = await getCurrentLocation();
 
-        // Cast new vote
-        socket.emit('vote_song', { roomCode, songId, voteType });
-        setCurrentVotedSong({ songId, voteType });
+            // If clicking on the same song with same vote type, unvote
+            if (currentVotedSong?.songId === songId && currentVotedSong?.voteType === voteType) {
+                // Unvote
+                socket.emit('vote_song', { roomCode, songId, voteType, location });
+                setCurrentVotedSong(null);
+                return;
+            }
+
+            // If there's a previous vote on a different song, remove it first
+            if (currentVotedSong && currentVotedSong.songId !== songId) {
+                // Remove previous vote
+                socket.emit('vote_song', {
+                    roomCode,
+                    songId: currentVotedSong.songId,
+                    voteType: currentVotedSong.voteType,
+                    location
+                });
+            }
+
+            // Cast new vote
+            socket.emit('vote_song', { roomCode, songId, voteType, location });
+            setCurrentVotedSong({ songId, voteType });
+        } catch (error) {
+            // Location access denied or failed
+            console.error('Location error:', error);
+            setLocationError('Location access required to vote. Please enable location services.');
+
+            // Show error for 5 seconds
+            setTimeout(() => setLocationError(null), 5000);
+        }
     };
 
     return (
         <div className="space-y-3">
+            {/* Location Error Banner */}
+            {locationError && (
+                <div className="glass-card bg-red-500/20 border-red-500/50 p-4 animate-pulse">
+                    <p className="text-red-200 text-sm sm:text-base text-center font-semibold">
+                        📍 {locationError}
+                    </p>
+                </div>
+            )}
+
             {queue.length === 0 ? (
                 <div className="text-center py-8 sm:py-16">
                     <div className="glass-card p-8 sm:p-12">
@@ -114,8 +141,8 @@ const QueueList = ({ roomCode }) => {
                                 <button
                                     onClick={() => handleVote(song._id, 'up')}
                                     className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${currentVotedSong?.songId === song._id && currentVotedSong?.voteType === 'up'
-                                            ? 'bg-green-500 text-white shadow-lg shadow-green-500/50 scale-110'
-                                            : 'bg-white/10 text-gray-300 hover:bg-green-500/30 hover:text-green-400 active:scale-95'
+                                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/50 scale-110'
+                                        : 'bg-white/10 text-gray-300 hover:bg-green-500/30 hover:text-green-400 active:scale-95'
                                         }`}
                                 >
                                     <ChevronUp className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -123,10 +150,10 @@ const QueueList = ({ roomCode }) => {
 
                                 <span
                                     className={`font-bold text-base sm:text-xl min-w-[2.5rem] sm:min-w-[3rem] text-center ${song.votes > 0
-                                            ? 'text-green-400'
-                                            : song.votes < 0
-                                                ? 'text-red-400'
-                                                : 'text-gray-400'
+                                        ? 'text-green-400'
+                                        : song.votes < 0
+                                            ? 'text-red-400'
+                                            : 'text-gray-400'
                                         }`}
                                 >
                                     {song.votes > 0 ? '+' : ''}
@@ -136,8 +163,8 @@ const QueueList = ({ roomCode }) => {
                                 <button
                                     onClick={() => handleVote(song._id, 'down')}
                                     className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${currentVotedSong?.songId === song._id && currentVotedSong?.voteType === 'down'
-                                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/50 scale-110'
-                                            : 'bg-white/10 text-gray-300 hover:bg-red-500/30 hover:text-red-400 active:scale-95'
+                                        ? 'bg-red-500 text-white shadow-lg shadow-red-500/50 scale-110'
+                                        : 'bg-white/10 text-gray-300 hover:bg-red-500/30 hover:text-red-400 active:scale-95'
                                         }`}
                                 >
                                     <ChevronDown className="w-5 h-5 sm:w-6 sm:h-6" />

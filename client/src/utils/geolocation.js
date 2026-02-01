@@ -1,5 +1,7 @@
 /**
  * Get user's current location using browser Geolocation API
+ * Uses cached location (up to 10 seconds old) for better performance
+ * No permission popup after initial grant - silent background fetch
  * @returns {Promise<{lat: number, lng: number}>}
  */
 export const getCurrentLocation = () => {
@@ -34,9 +36,9 @@ export const getCurrentLocation = () => {
                 reject(new Error(errorMessage));
             },
             {
-                enableHighAccuracy: false, // Changed to false for faster response
-                timeout: 30000, // Increased to 30 seconds
-                maximumAge: 0
+                enableHighAccuracy: false, // Faster response, good enough accuracy
+                timeout: 5000,             // Quick timeout (5 seconds)
+                maximumAge: 10000          // Use cached location up to 10 seconds old (instant!)
             }
         );
     });
