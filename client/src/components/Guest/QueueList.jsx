@@ -4,7 +4,7 @@ import { ChevronUp, ChevronDown, Music, Clock, Crown } from 'lucide-react';
 
 const QueueList = ({ roomCode }) => {
     const [queue, setQueue] = useState([]);
-    const [votedSongs, setVotedSongs] = useState({}); // { songId: 'up' | 'down' }
+    const [currentVotedSong, setCurrentVotedSong] = useState(null); // Only track ONE voted song
     const { socket } = useSocket();
 
     useEffect(() => {
@@ -25,16 +25,27 @@ const QueueList = ({ roomCode }) => {
     }, [socket]);
 
     const handleVote = (songId, voteType) => {
-        // Toggle vote if clicking same button
-        const currentVote = votedSongs[songId];
-        const newVote = currentVote === voteType ? null : voteType;
+        // If clicking on the same song with same vote type, unvote
+        if (currentVotedSong?.songId === songId && currentVotedSong?.voteType === voteType) {
+            // Unvote
+            socket.emit('vote_song', { roomCode, songId, voteType });
+            setCurrentVotedSong(null);
+            return;
+        }
 
+        // If there's a previous vote on a different song, remove it first
+        if (currentVotedSong && currentVotedSong.songId !== songId) {
+            // Remove previous vote
+            socket.emit('vote_song', {
+                roomCode,
+                songId: currentVotedSong.songId,
+                voteType: currentVotedSong.voteType
+            });
+        }
+
+        // Cast new vote
         socket.emit('vote_song', { roomCode, songId, voteType });
-
-        setVotedSongs(prev => ({
-            ...prev,
-            [songId]: newVote
-        }));
+        setCurrentVotedSong({ songId, voteType });
     };
 
     return (
@@ -58,12 +69,12 @@ const QueueList = ({ roomCode }) => {
                             {/* Rank Badge */}
                             <div
                                 className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-base sm:text-lg shadow-lg ${index === 0
-                                        ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 text-white animate-pulse'
-                                        : index === 1
-                                            ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white'
-                                            : index === 2
-                                                ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
-                                                : 'bg-white/20 text-gray-300'
+                                    ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 text-white animate-pulse'
+                                    : index === 1
+                                        ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white'
+                                        : index === 2
+                                            ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
+                                            : 'bg-white/20 text-gray-300'
                                     }`}
                             >
                                 {index === 0 ? <Crown className="w-5 h-5 sm:w-6 sm:h-6" /> : index + 1}
@@ -102,7 +113,7 @@ const QueueList = ({ roomCode }) => {
                             <div className="flex flex-col items-center gap-0.5 sm:gap-1 flex-shrink-0">
                                 <button
                                     onClick={() => handleVote(song._id, 'up')}
-                                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${votedSongs[song._id] === 'up'
+                                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${currentVotedSong?.songId === song._id && currentVotedSong?.voteType === 'up'
                                             ? 'bg-green-500 text-white shadow-lg shadow-green-500/50 scale-110'
                                             : 'bg-white/10 text-gray-300 hover:bg-green-500/30 hover:text-green-400 active:scale-95'
                                         }`}
@@ -124,7 +135,7 @@ const QueueList = ({ roomCode }) => {
 
                                 <button
                                     onClick={() => handleVote(song._id, 'down')}
-                                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${votedSongs[song._id] === 'down'
+                                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 touch-manipulation ${currentVotedSong?.songId === song._id && currentVotedSong?.voteType === 'down'
                                             ? 'bg-red-500 text-white shadow-lg shadow-red-500/50 scale-110'
                                             : 'bg-white/10 text-gray-300 hover:bg-red-500/30 hover:text-red-400 active:scale-95'
                                         }`}

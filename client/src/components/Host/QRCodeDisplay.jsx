@@ -6,9 +6,9 @@ const QRCodeDisplay = ({ roomCode }) => {
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedUrl, setCopiedUrl] = useState(false);
 
-    // Use environment variable for deployed URL, fallback to current origin
-    const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
-    const roomUrl = `${frontendUrl}/join/${roomCode}`;
+    // Always use current origin for QR code to ensure it works when scanned
+    // This will automatically use the deployed URL when in production
+    const roomUrl = `${window.location.origin}/join/${roomCode}`;
 
     const copyRoomCode = () => {
         navigator.clipboard.writeText(roomCode);
