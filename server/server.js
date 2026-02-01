@@ -70,6 +70,22 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Root route - API information
+app.get('/', (req, res) => {
+    res.json({
+        message: '🎵 OpenAux API Server',
+        status: 'Running',
+        version: '1.0.0',
+        description: 'Democratic Jukebox - Real-time music collaboration platform',
+        endpoints: {
+            rooms: '/api/rooms',
+            songs: '/api/songs',
+            health: '/api/health'
+        },
+        documentation: 'https://github.com/yourusername/openaux'
+    });
+});
+
 // Routes
 app.use('/api/rooms', roomRoutes);
 app.use('/api/songs', songRoutes);
